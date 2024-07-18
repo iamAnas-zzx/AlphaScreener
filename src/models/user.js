@@ -1,6 +1,9 @@
 import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs";
+import mongoose, { Schema } from "mongoose";
+import jwt from "jsonwebtoken"
+import bcrypt from "bcryptjs";
 
 
 const userSchema = new Schema({
@@ -75,12 +78,12 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 };
 
 
-userSchema.methods.generateAccessToken = function () {
+userSchema.method.generateAccessToken = function () {
     return jwt.sign(
         {
             _id: this._id,
-            email: this.email
-            // name: this.name,
+            email: this.email,
+            name: this.name,
             // phoneNumber : this.phoneNumber
 
         },
@@ -91,7 +94,7 @@ userSchema.methods.generateAccessToken = function () {
     )
 }
 
-userSchema.methods.generateRefreshToken = function () {
+userSchema.method.generateRefreshToken = function () {
     return jwt.sign(
         {
             _id: this._id,

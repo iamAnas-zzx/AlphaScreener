@@ -4,6 +4,7 @@ import { User } from '../models/user.js';
 import { asyncHandler } from "../utils/CatchError.js";
 import { ExpressError } from "../utils/ExpressError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import { Otp } from "../models/otp.js";
 import  twilio  from "twilio";
 import jwt from "jsonwebtoken";
@@ -11,8 +12,6 @@ import mongoose from "mongoose";
 
 const generateAccessAndRefereshTokens = async(userId) =>{
   try {
-
-    ///extra db call....
       const user = await User.findById(userId)
       const accessToken = user.generateAccessToken()
       const refreshToken = user.generateRefreshToken()
@@ -24,9 +23,12 @@ const generateAccessAndRefereshTokens = async(userId) =>{
 
 
   } catch (error) {
-      throw new ExpressError(500, "Something went wrong while generating referesh and access token")
+      throw new ApiError(500, "Something went wrong while generating referesh and access token")
   }
 }
+
+
+
 
 const accountID = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -111,6 +113,12 @@ router.post('/login', asyncHandler(async (req, res) => {
   // }
   const isMatch = await user.comparePassword(password);
   console.log(user); // Debugging: log the user instance
+  const user = await User.findOne({ email: email })
+  if (!user) {
+    throw new ExpressError(404, "User does not exist")
+  }
+  const isMatch = await user.comparePassword(password)
+  console.log(User); // Debugging: log the user instance
   if (!isMatch) {
     throw new Error("Invalid user credentials")
     // return res.send('Enter all values');
@@ -143,6 +151,31 @@ router.post('/login', asyncHandler(async (req, res) => {
   }catch (err) {
     res.status(400).send(err.message);
   }
+    throw new ExpressError(401, "Invalid user credentials")
+  }
+
+  const {accessToken, refreshToken} = await generateAccessAndRefereshTokens(user._id);
+  const options = {
+    httpOnly: true,
+    secure: true
+}
+// .cookie("accessToken", accessToken, options)
+    // .cookie("refreshToken", refreshToken, options)
+    
+
+  return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200, 
+            {
+                accessToken, refreshToken
+            },
+            "User logged In Successfully"
+        )
+    )
+
+  // res.send('User Exist');
 }))
 
 export default router;
